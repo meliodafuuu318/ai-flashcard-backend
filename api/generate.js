@@ -1,6 +1,7 @@
 const cohere = require("cohere-ai");
 
-cohere.init(process.env.COHERE_API_KEY); // store in Vercel env var
+// Initialize the Cohere client with your API key
+const client = new cohere.Client(process.env.COHERE_API_KEY);
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -12,7 +13,7 @@ module.exports = async (req, res) => {
   const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as JSON like this: [{"question": "...", "answer": "..."}, ...]`;
 
   try {
-    const response = await cohere.generate({
+    const response = await client.generate({
       model: "command-r",
       prompt: prompt,
       max_tokens: 300,
@@ -21,7 +22,7 @@ module.exports = async (req, res) => {
 
     const text = response.body.generations[0].text;
 
-    // Try to parse JSON block from response
+    // Parse the JSON from the response
     const flashcards = JSON.parse(text.trim());
 
     res.status(200).json({ flashcards });
