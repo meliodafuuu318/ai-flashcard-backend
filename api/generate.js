@@ -1,5 +1,6 @@
 import { CohereClient } from "cohere-ai";
 
+// Initialize the Cohere client with your API key
 const client = new CohereClient({ apiKey: process.env.CO_API_KEY });
 
 export default async function handler(req, res) {
@@ -17,14 +18,16 @@ export default async function handler(req, res) {
 
   const { topic, difficulty, count } = req.body;
 
-  const prompt = `Generate exactly ${count} ${difficulty} multiple-choice questions on the topic "${topic}". Each question should have exactly 4 options, with one correct answer indicated by the index (0-based). Format the JSON like this:
-  [
-    {
-      "question": "...",
-      "options": ["A", "B", "C", "D"],
-      "correct_index": 2
-    }
-  ]`;
+  const prompt = `Generate exactly ${count} ${difficulty} multiple-choice questions on the topic "${topic}".
+Each question must be an object with only these keys: "question", "options", and "correct_index".
+Only output a strict JSON array like this:
+[
+  {
+    "question": "What is...",
+    "options": ["A", "B", "C", "D"],
+    "correct_index": 2
+  }
+]`;
 
   try {
     const response = await client.chat({
@@ -33,21 +36,28 @@ export default async function handler(req, res) {
       temperature: 0.7,
     });
 
-    // Access response.text directly (chat endpoint response format)
-    const text = response.text;
+    const rawText = response.text ?? response.body?.generations?.[0]?.text;
 
-    if (!text) {
-      return res.status(500).json({ error: "No text found in Cohere response" });
+    if (!rawText) {
+      return res.status(500).json({ error: "Invalid response format from Cohere" });
     }
 
-    const jsonStart = text.indexOf("[");
-    const jsonEnd = text.lastIndexOf("]") + 1;
-    const jsonText = text.substring(jsonStart, jsonEnd);
+    const jsonStart = rawText.indexOf("[");
+    const jsonEnd = rawText.lastIndexOf("]") + 1;
+    const jsonText = rawText.substring(jsonStart, jsonEnd);
 
-    const flashcards = JSON.parse(jsonText);
+    let flashcards = JSON.parse(jsonText);
+
+    // Filter only valid flashcard objects
+    flashcards = flashcards.filter(item =>
+      item &&
+      typeof item.question === 'string' &&
+      Array.isArray(item.options) &&
+      item.options.length === 4 &&
+      typeof item.correct_index === 'number'
+    );
 
     return res.status(200).json(flashcards);
-
   } catch (error) {
     return res.status(500).json({ error: "Failed to generate flashcards" });
   }
