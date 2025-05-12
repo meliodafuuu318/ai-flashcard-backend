@@ -1,8 +1,7 @@
 const { CohereClient } = require("cohere-ai");
 
-// Create the Cohere client instance
 const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY, // Your API key from environment
+  token: process.env.COHERE_API_KEY,
 });
 
 module.exports = async (req, res) => {
@@ -15,15 +14,14 @@ module.exports = async (req, res) => {
   const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as JSON like this: [{"question": "...", "answer": "..."}, ...]`;
 
   try {
-    const response = await cohere.generate({
-      model: "command-xlarge-nightly", // ✅ supported model
-      prompt,
-      maxTokens: 300,
+    const response = await cohere.chat({
+      model: "command-r-plus", // Use a model that supports chat
+      message: prompt,
       temperature: 0.7,
     });
 
-    const raw = response.generations[0].text.trim();
-    console.log("AI Response:", raw);
+    const raw = response.text.trim();
+    console.log("Cohere raw response:", raw);
 
     let flashcards;
     try {
