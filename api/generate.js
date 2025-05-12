@@ -1,44 +1,32 @@
-// File: api/generate.js
+const cohere = require("cohere-ai");
 
-const { OpenAI } = require("openai");
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // This uses your Vercel env variable
-});
-
-console.log("API Key loaded:", process.env.OPENAI_API_KEY);
+cohere.init(process.env.COHERE_API_KEY); // store in Vercel env var
 
 module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { topic, difficulty, numQuestions } = req.body;
+
+  const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as JSON like this: [{"question": "...", "answer": "..."}, ...]`;
+
   try {
-    const { topic, count, difficulty } = req.body;
-
-    if (!topic || !count) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const prompt = `Generate ${count} flashcard questions about ${topic} at ${difficulty} difficulty. Format them as JSON objects with "question" and "answer".`;
-
-    const chat = await openai.chat.completions.create({
-      messages: [
-        { role: "system", content: "You are a helpful flashcard generator." },
-        { role: "user", content: prompt }
-      ],
-      model: "gpt-3.5-turbo"
+    const response = await cohere.generate({
+      model: "command-r",
+      prompt: prompt,
+      max_tokens: 300,
+      temperature: 0.7,
     });
 
-    const responseText = chat.choices[0].message.content;
+    const text = response.body.generations[0].text;
 
-    // Try to parse the response as JSON if possible
-    let questions;
-    try {
-      questions = JSON.parse(responseText);
-    } catch {
-      questions = [{ question: "Parsing error", answer: "Could not parse response" }];
-    }
+    // Try to parse JSON block from response
+    const flashcards = JSON.parse(text.trim());
 
-    res.status(200).json({ questions });
-  } catch (err) {
-    console.error("OpenAI Error:", err.response?.data || err.message || err);
+    res.status(200).json({ flashcards });
+  } catch (error) {
+    console.error("Cohere error:", error);
     res.status(500).json({ error: "Failed to generate flashcards" });
   }
 };
