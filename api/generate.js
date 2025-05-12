@@ -35,8 +35,10 @@ export default async function handler(req, res) {
       temperature: 0.7,
     });
 
-    // Check if the response body is structured as expected
-    if (response && response.body && response.body.generations) {
+    if (!response.body || !response.body.text) {
+      return res.status(500).json({ error: "Invalid response format from Cohere" });
+    }
+
       const raw = response.body.generations[0].text;
       const jsonStart = raw.indexOf("[");
       const jsonEnd = raw.lastIndexOf("]") + 1;
@@ -44,10 +46,7 @@ export default async function handler(req, res) {
       const flashcards = JSON.parse(jsonText);
 
       return res.status(200).json(flashcards);
-    } else {
-      console.error("Unexpected response format:", response);
-      return res.status(500).json({ error: "Unexpected response format from Cohere" });
-    }
+    
   } catch (error) {
     console.error("Cohere error:", error);
     return res.status(500).json({ error: "Failed to generate flashcards" });
