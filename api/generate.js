@@ -1,6 +1,6 @@
 const cohere = require("cohere-ai");
 
-// Correct initialization
+// ✅ Initialize correctly
 cohere.init(process.env.COHERE_API_KEY);
 
 module.exports = async (req, res) => {
@@ -10,19 +10,19 @@ module.exports = async (req, res) => {
 
   const { topic, difficulty, numQuestions } = req.body;
 
-  const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as JSON like this: [{"question": "...", "answer": "..."}, ...]`;
+  const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format the response as valid JSON like this: [{"question": "...", "answer": "..."}, ...]`;
 
   try {
     const response = await cohere.generate({
       model: "command-r",
-      prompt: prompt,
-      max_tokens: 300,
+      prompt,
+      max_tokens: 500,
       temperature: 0.7,
     });
 
     const text = response.body.generations[0].text;
 
-    // Try to safely parse JSON
+    // Clean and parse the response
     const flashcards = JSON.parse(text.trim());
 
     res.status(200).json({ flashcards });
