@@ -1,4 +1,4 @@
-import { CohereClient } from "cohere-ai"; // Ensure you import the correct class
+import { CohereClient } from "cohere-ai";
 
 // Initialize the Cohere client with your API key
 const client = new CohereClient({ apiKey: process.env.CO_API_KEY });
@@ -28,21 +28,26 @@ export default async function handler(req, res) {
   ]`;
 
   try {
+    // Send the request to the Cohere API
     const response = await client.chat({
       model: "command-r-plus",
       message: prompt,
       temperature: 0.7,
     });
 
-    console.log("Cohere API response:", response);
+    // Check if the response body is structured as expected
+    if (response && response.body && response.body.generations) {
+      const raw = response.body.generations[0].text;
+      const jsonStart = raw.indexOf("[");
+      const jsonEnd = raw.lastIndexOf("]") + 1;
+      const jsonText = raw.substring(jsonStart, jsonEnd);
+      const flashcards = JSON.parse(jsonText);
 
-    const raw = response.body.text;
-    const jsonStart = raw.indexOf("[");
-    const jsonEnd = raw.lastIndexOf("]") + 1;
-    const jsonText = raw.substring(jsonStart, jsonEnd);
-    const flashcards = JSON.parse(jsonText);
-
-    return res.status(200).json(flashcards);
+      return res.status(200).json(flashcards);
+    } else {
+      console.error("Unexpected response format:", response);
+      return res.status(500).json({ error: "Unexpected response format from Cohere" });
+    }
   } catch (error) {
     console.error("Cohere error:", error);
     return res.status(500).json({ error: "Failed to generate flashcards" });
