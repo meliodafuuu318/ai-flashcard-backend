@@ -17,8 +17,17 @@ module.exports = async (req, res) => {
 
   const { topic, difficulty, count } = req.body;
 
-  const prompt = `Generate ${count} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as JSON like this: [{"question": "...", "answer": "..."}, ...]`;
-
+  const prompt = `Generate exactly ${count} ${difficulty} multiple-choice questions on the topic "${topic}".
+  Each question should have exactly 4 options, with one correct answer indicated by the index (0-based). Format the JSON like:
+  [
+    {
+      "question": "...",
+      "options": ["A", "B", "C", "D"],
+      "correct_index": 2
+    }
+  ]
+  `;
+  
   try {
     const response = await cohere.chat({
       model: "command-r-plus",
