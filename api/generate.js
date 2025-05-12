@@ -1,8 +1,5 @@
-const { CohereClient } = require("cohere-ai");
-
-const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY,
-});
+const cohere = require("cohere-ai");
+cohere.init(process.env.COHERE_API_KEY); // initialize with your API key
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -11,23 +8,18 @@ module.exports = async (req, res) => {
 
   const { topic, difficulty, numQuestions } = req.body;
 
-  console.log("Incoming request:", { topic, difficulty, numQuestions });
-
-  const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as valid JSON like [{"question":"...","answer":"..."}]`;
+  const prompt = `Generate ${numQuestions} ${difficulty} flashcard-style questions with answers on the topic "${topic}". Format as JSON like this: [{"question": "...", "answer": "..."}, ...]`;
 
   try {
     const response = await cohere.generate({
-      model: "command-r",
-      prompt,
-      maxTokens: 500,
+      model: "command-xlarge-nightly", // ✅ Supported model
+      prompt: prompt,
+      max_tokens: 300,
       temperature: 0.7,
     });
 
-    const text = response.generations[0].text.trim();
-
-    console.log("Raw AI response:", text);
-
-    const flashcards = JSON.parse(text); // might throw if text is not valid JSON
+    const text = response.body.generations[0].text;
+    const flashcards = JSON.parse(text.trim());
 
     res.status(200).json({ flashcards });
   } catch (error) {
