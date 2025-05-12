@@ -1,6 +1,5 @@
 import { CohereClient } from "cohere-ai";
 
-// Initialize the Cohere client with your API key
 const client = new CohereClient({ apiKey: process.env.CO_API_KEY });
 
 export default async function handler(req, res) {
@@ -28,28 +27,28 @@ export default async function handler(req, res) {
   ]`;
 
   try {
-    // Send the request to the Cohere API
-    const response = await client.generate({
+    const response = await client.chat({
       model: "command-r-plus",
-      prompt: prompt,
+      message: prompt,
       temperature: 0.7,
-      max_tokens: 1000,
     });
 
-    const text = response.body.generations?.[0]?.text;
+    // Access response.text directly (chat endpoint response format)
+    const text = response.text;
 
     if (!text) {
-      return res.status(500).json({ error: "Invalid response format from Cohere" });
+      return res.status(500).json({ error: "No text found in Cohere response" });
     }
 
     const jsonStart = text.indexOf("[");
     const jsonEnd = text.lastIndexOf("]") + 1;
     const jsonText = text.substring(jsonStart, jsonEnd);
+
     const flashcards = JSON.parse(jsonText);
 
     return res.status(200).json(flashcards);
+
   } catch (error) {
-    console.error("Cohere error:", error);
     return res.status(500).json({ error: "Failed to generate flashcards" });
   }
 }
