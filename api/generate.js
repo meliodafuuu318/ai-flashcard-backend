@@ -15,20 +15,19 @@ module.exports = async (req, res) => {
 
   try {
     const response = await cohere.chat({
-      model: "command-r-plus", // Use a model that supports chat
+      model: "command-r-plus",
       message: prompt,
       temperature: 0.7,
     });
 
-    const raw = response.text.trim();
-    console.log("Cohere raw response:", raw);
+    let raw = response.text.trim();
 
-    let flashcards;
-    try {
-      flashcards = JSON.parse(raw);
-    } catch (parseError) {
-      return res.status(500).json({ error: "Invalid JSON from AI", raw });
+    // Remove markdown-style code block if present
+    if (raw.startsWith("```")) {
+      raw = raw.replace(/```json|```/g, "").trim();
     }
+
+    const flashcards = JSON.parse(raw);
 
     res.status(200).json({ flashcards });
   } catch (error) {
