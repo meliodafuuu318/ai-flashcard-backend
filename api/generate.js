@@ -1,4 +1,5 @@
 // File: api/generate.js
+console.log("API Key loaded:", process.env.OPENAI_API_KEY);
 
 const { OpenAI } = require("openai");
 
@@ -36,7 +37,7 @@ module.exports = async (req, res) => {
 
     res.status(200).json({ questions });
   } catch (err) {
-    console.error("Server error:", err);
+    console.error("OpenAI Error:", err.response?.data || err.message || err);
     res.status(500).json({ error: "Failed to generate flashcards" });
   }
 };
