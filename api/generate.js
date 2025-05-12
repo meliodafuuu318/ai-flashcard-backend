@@ -1,7 +1,7 @@
 import { CohereClient } from "cohere-ai"; // Ensure you import the correct class
 
 // Initialize the Cohere client with your API key
-const client = new CohereClient({ apiKey: process.env.COHERE_API_KEY });
+const client = new CohereClient({ apiKey: process.env.CO_API_KEY });
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
