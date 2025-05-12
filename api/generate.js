@@ -1,10 +1,8 @@
-// api/generate.js
 import cohere from "cohere-ai";
 
 cohere.init(process.env.COHERE_API_KEY);
 
 export default async function handler(req, res) {
-  // Handle CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -41,7 +39,7 @@ export default async function handler(req, res) {
     const jsonText = raw.substring(jsonStart, jsonEnd);
     const flashcards = JSON.parse(jsonText);
 
-    return res.status(200).json(flashcards); // Not wrapped in { flashcards } – your frontend expects a raw array
+    return res.status(200).json(flashcards);
   } catch (error) {
     console.error("Cohere error:", error);
     return res.status(500).json({ error: "Failed to generate flashcards" });
