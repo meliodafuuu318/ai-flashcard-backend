@@ -22,12 +22,14 @@ module.exports = async (req, res) => {
 
     let raw = response.text.trim();
 
-    // Remove markdown-style code block if present
-    if (raw.startsWith("```")) {
-      raw = raw.replace(/```json|```/g, "").trim();
+    // Extract the first JSON array found in the response
+    const match = raw.match(/\[.*\]/s); // 's' allows dot to match newlines
+
+    if (!match) {
+      throw new Error("No JSON array found in AI response");
     }
 
-    const flashcards = JSON.parse(raw);
+    const flashcards = JSON.parse(match[0]);
 
     res.status(200).json({ flashcards });
   } catch (error) {
