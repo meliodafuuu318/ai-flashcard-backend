@@ -1,46 +1,42 @@
-console.log("DEBUG: OPENAI_API_KEY is", process.env.OPENAI_API_KEY ? "present ✅" : "missing ❌");
+// File: api/generate.js
 
-const { Configuration, OpenAIApi } = require('openai');
+const { OpenAI } = require("openai");
 
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // This uses your Vercel env variable
 });
-const openai = new OpenAIApi(config);
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
-
-  const { topic, count, difficulty } = req.body;
-
-  const prompt = `
-Generate ${count} flashcard-style multiple-choice questions on the topic "${topic}".
-Each question should be of ${difficulty} difficulty and have:
-- a question,
-- 4 options,
-- the index (0-based) of the correct answer.
-
-Respond in JSON array like:
-[
-  {
-    "question": "...",
-    "options": ["A", "B", "C", "D"],
-    "correct_index": 1
-  },
-  ...
-]
-`;
-
+module.exports = async (req, res) => {
   try {
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
+    const { topic, count, difficulty } = req.body;
+
+    if (!topic || !count) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const prompt = `Generate ${count} flashcard questions about ${topic} at ${difficulty} difficulty. Format them as JSON objects with "question" and "answer".`;
+
+    const chat = await openai.chat.completions.create({
+      messages: [
+        { role: "system", content: "You are a helpful flashcard generator." },
+        { role: "user", content: prompt }
+      ],
+      model: "gpt-3.5-turbo"
     });
 
-    const content = completion.data.choices[0].message.content;
-    const json = JSON.parse(content);
-    res.status(200).json(json);
-  } catch (error) {
-    console.error('OpenAI error:', error);
-    res.status(500).json({ error: 'Failed to generate questions' });
+    const responseText = chat.choices[0].message.content;
+
+    // Try to parse the response as JSON if possible
+    let questions;
+    try {
+      questions = JSON.parse(responseText);
+    } catch {
+      questions = [{ question: "Parsing error", answer: "Could not parse response" }];
+    }
+
+    res.status(200).json({ questions });
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ error: "Failed to generate flashcards" });
   }
-}
+};
