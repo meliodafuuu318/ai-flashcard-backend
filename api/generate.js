@@ -34,6 +34,8 @@ export default async function handler(req, res) {
       temperature: 0.7,
     });
 
+    console.log("Cohere API response:", response);
+
     const raw = response.body.text;
     const jsonStart = raw.indexOf("[");
     const jsonEnd = raw.lastIndexOf("]") + 1;
