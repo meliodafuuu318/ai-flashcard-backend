@@ -1,11 +1,12 @@
 // File: api/generate.js
-console.log("API Key loaded:", process.env.OPENAI_API_KEY);
 
 const { OpenAI } = require("openai");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // This uses your Vercel env variable
 });
+
+console.log("API Key loaded:", process.env.OPENAI_API_KEY);
 
 module.exports = async (req, res) => {
   try {
