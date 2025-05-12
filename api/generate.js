@@ -25,8 +25,8 @@ module.exports = async (req, res) => {
     const flashcards = JSON.parse(text);
 
     res.status(200).json({ flashcards });
-  } catch (error) {
-    console.error("Cohere error:", error);
-    res.status(500).json({ error: "Failed to generate flashcards" });
+  } } catch (error) {
+    console.error("Cohere error details:", error);
+    res.status(500).json({ error: "Failed to generate flashcards", details: error.message });
   }
 };
