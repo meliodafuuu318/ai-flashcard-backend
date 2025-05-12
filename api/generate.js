@@ -1,3 +1,5 @@
+console.log("DEBUG: OPENAI_API_KEY is", process.env.OPENAI_API_KEY ? "present ✅" : "missing ❌");
+
 const { Configuration, OpenAIApi } = require('openai');
 
 const config = new Configuration({
