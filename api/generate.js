@@ -29,30 +29,25 @@ export default async function handler(req, res) {
 
   try {
     // Send the request to the Cohere API
-    const response = await client.chat({
+    const response = await client.generate({
       model: "command-r-plus",
-      message: prompt,
+      prompt: prompt,
       temperature: 0.7,
+      max_tokens: 1000,
     });
 
-    console.log("Full Cohere response:", response.body);
+    const text = response.body.generations?.[0]?.text;
 
-    // Now parse based on the actual structure of the response
-    const raw = response.body || {};
-    const text = raw.text || "";  // Fallback to an empty string if text is missing
-  
     if (!text) {
-      return res.status(500).json({ error: "No text found in Cohere response" });
+      return res.status(500).json({ error: "Invalid response format from Cohere" });
     }
 
-    const raw = response.body.generations[0].text;
-    const jsonStart = raw.indexOf("[");
-    const jsonEnd = raw.lastIndexOf("]") + 1;
-    const jsonText = raw.substring(jsonStart, jsonEnd);
+    const jsonStart = text.indexOf("[");
+    const jsonEnd = text.lastIndexOf("]") + 1;
+    const jsonText = text.substring(jsonStart, jsonEnd);
     const flashcards = JSON.parse(jsonText);
 
     return res.status(200).json(flashcards);
-    
   } catch (error) {
     console.error("Cohere error:", error);
     return res.status(500).json({ error: "Failed to generate flashcards" });
