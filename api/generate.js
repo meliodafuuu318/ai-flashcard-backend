@@ -1,7 +1,5 @@
 import { CohereClient } from "cohere-ai"; // Ensure you import the correct class
 
-console.log("Cohere API Key:", process.env.COHERE_API_KEY);
-
 // Initialize the Cohere client with your API key
 const client = new CohereClient({ apiKey: process.env.COHERE_API_KEY });
 
