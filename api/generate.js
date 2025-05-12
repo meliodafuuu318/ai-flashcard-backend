@@ -1,6 +1,7 @@
-import cohere from "cohere-ai";
+import { CohereClient } from "cohere-ai"; // Ensure you import the correct class
 
-cohere.init(process.env.COHERE_API_KEY);
+// Initialize the Cohere client with your API key
+const client = new CohereClient({ apiKey: process.env.COHERE_API_KEY });
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -18,16 +19,16 @@ export default async function handler(req, res) {
   const { topic, difficulty, count } = req.body;
 
   const prompt = `Generate exactly ${count} ${difficulty} multiple-choice questions on the topic "${topic}". Each question should have exactly 4 options, with one correct answer indicated by the index (0-based). Format the JSON like this:
-[
-  {
-    "question": "...",
-    "options": ["A", "B", "C", "D"],
-    "correct_index": 2
-  }
-]`;
+  [
+    {
+      "question": "...",
+      "options": ["A", "B", "C", "D"],
+      "correct_index": 2
+    }
+  ]`;
 
   try {
-    const response = await cohere.chat({
+    const response = await client.chat({
       model: "command-r-plus",
       message: prompt,
       temperature: 0.7,
