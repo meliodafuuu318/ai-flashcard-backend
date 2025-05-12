@@ -35,17 +35,23 @@ export default async function handler(req, res) {
       temperature: 0.7,
     });
 
-    if (!response.body || !response.body.text) {
-      return res.status(500).json({ error: "Invalid response format from Cohere" });
+    console.log("Full Cohere response:", response.body);
+
+    // Now parse based on the actual structure of the response
+    const raw = response.body || {};
+    const text = raw.text || "";  // Fallback to an empty string if text is missing
+  
+    if (!text) {
+      return res.status(500).json({ error: "No text found in Cohere response" });
     }
 
-      const raw = response.body.generations[0].text;
-      const jsonStart = raw.indexOf("[");
-      const jsonEnd = raw.lastIndexOf("]") + 1;
-      const jsonText = raw.substring(jsonStart, jsonEnd);
-      const flashcards = JSON.parse(jsonText);
+    const raw = response.body.generations[0].text;
+    const jsonStart = raw.indexOf("[");
+    const jsonEnd = raw.lastIndexOf("]") + 1;
+    const jsonText = raw.substring(jsonStart, jsonEnd);
+    const flashcards = JSON.parse(jsonText);
 
-      return res.status(200).json(flashcards);
+    return res.status(200).json(flashcards);
     
   } catch (error) {
     console.error("Cohere error:", error);
