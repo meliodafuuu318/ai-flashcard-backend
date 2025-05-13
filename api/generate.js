@@ -35,16 +35,26 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid difficulty level" });
   }
 
-  const prompt = `Generate exactly ${count} multiple-choice questions on the topic "${topic}" at a ${difficultyDescription}.
-Each question must be an object with only these keys: "question", "options", and "correct_index".
-Only output a strict JSON array like this:
-[
-  {
-    "question": "What is...",
-    "options": ["A", "B", "C", "D"],
-    "correct_index": 2
-  }
-]`;
+  const prompt = `Generate exactly ${count} unique and diverse multiple-choice questions on the topic "${topic}" at a ${difficultyDescription}.
+  Ensure that:
+  - Each question covers a different subtopic or angle within "${topic}"
+  - No two questions should be similar or redundant
+  - All questions must be original and not commonly found in basic quiz banks
+  
+  Each question must be returned as an object with exactly these keys:
+  - "question": a string with the question
+  - "options": an array of 4 distinct answer choices
+  - "correct_index": the index (0-3) of the correct answer in the options array
+  
+  Respond only with a strict JSON array like this:
+  [
+    {
+      "question": "What is...",
+      "options": ["A", "B", "C", "D"],
+      "correct_index": 2
+    }
+  ]`;
+
 
   try {
     const response = await client.chat({
