@@ -18,7 +18,24 @@ export default async function handler(req, res) {
 
   const { topic, difficulty, count } = req.body;
 
-  const prompt = `Generate exactly ${count} ${difficulty} multiple-choice questions on the topic "${topic}".
+  // Adjust prompt based on the difficulty level
+  let difficultyDescription = "";
+
+  switch (difficulty.toLowerCase()) {
+    case "easy":
+      difficultyDescription = `primary school level, simpler language and basic concepts`;
+      break;
+    case "medium":
+      difficultyDescription = `high school level, more advanced but still general`;
+      break;
+    case "hard":
+      difficultyDescription = `college level, more complex concepts and in-depth details`;
+      break;
+    default:
+      return res.status(400).json({ error: "Invalid difficulty level" });
+  }
+
+  const prompt = `Generate exactly ${count} multiple-choice questions on the topic "${topic}" at a ${difficultyDescription}.
 Each question must be an object with only these keys: "question", "options", and "correct_index".
 Only output a strict JSON array like this:
 [
