@@ -19,30 +19,24 @@ export default async function handler(req, res) {
 
   const { topic, difficulty, count } = req.body;
 
-  let difficultyDescription = "";
-
+  let difficultyDescription;
   switch (difficulty?.toLowerCase()) {
     case "easy":
-      difficultyDescription = "primary school level, simple language and basic concepts";
+      difficultyDescription = "primary school level";
       break;
     case "medium":
-      difficultyDescription = "high school level, moderately detailed explanations";
+      difficultyDescription = "high school level";
       break;
     case "hard":
-      difficultyDescription = "college level, in-depth and technical explanations";
+      difficultyDescription = "college level";
       break;
     default:
-      return res.status(400).json({ error: "Invalid difficulty level" });
+      return res.status(400).json({ error: "Invalid difficulty" });
   }
 
-  const prompt = `Generate exactly ${count} unique and diverse multiple-choice questions on the topic "${topic}" at a ${difficultyDescription}.
+  const prompt = `Generate exactly ${count} multiple-choice questions about "${topic}" (${difficultyDescription}).
 
-Requirements:
-- Each question must cover a different subtopic
-- No redundancy or similarity
-- Original questions only
-
-Return a STRICT JSON array only:
+Return ONLY valid JSON:
 
 [
   {
@@ -56,37 +50,34 @@ Return a STRICT JSON array only:
     const aiResponse = await client.v2.chat({
       model: "command-a-reasoning-08-2025",
       messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "user", content: prompt }
       ],
       temperature: 0.3,
     });
 
-    const rawText =
-      aiResponse.message?.content?.[0]?.text;
+    const rawText = aiResponse.message?.content
+      ?.filter(c => c.type === "text")
+      ?.map(c => c.text)
+      ?.join("\n");
 
     if (!rawText) {
-      return res.status(500).json({ error: "Empty response from Cohere" });
+      console.error("No text output:", aiResponse);
+      return res.status(500).json({ error: "No text returned from Cohere" });
     }
 
     const jsonStart = rawText.indexOf("[");
     const jsonEnd = rawText.lastIndexOf("]") + 1;
 
-    const jsonText = rawText.slice(jsonStart, jsonEnd);
-    let questions = JSON.parse(jsonText);
+    if (jsonStart === -1 || jsonEnd === -1) {
+      console.error("Invalid JSON format:", rawText);
+      return res.status(500).json({ error: "Model did not return JSON" });
+    }
 
-    questions = questions.filter(q =>
-      typeof q?.question === "string" &&
-      Array.isArray(q.options) &&
-      q.options.length === 4 &&
-      Number.isInteger(q.correct_index)
-    );
+    const questions = JSON.parse(rawText.slice(jsonStart, jsonEnd));
 
     return res.status(200).json(questions);
   } catch (err) {
-    console.error(err);
+    console.error("Cohere error:", err);
     return res.status(500).json({ error: "Failed to generate questions" });
   }
 }
