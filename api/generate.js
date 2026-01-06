@@ -50,30 +50,30 @@ Return ONLY valid JSON:
     const aiResponse = await client.v2.chat({
       model: "command-a-reasoning-08-2025",
       messages: [
-        { role: "user", content: prompt }
+        {
+          role: "system",
+          content: "You are a JSON API. Output ONLY valid JSON. No text. No markdown."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
       ],
-      temperature: 0.3,
+      temperature: 0.2,
     });
 
-    const rawText = aiResponse.message?.content
-      ?.filter(c => c.type === "text")
-      ?.map(c => c.text)
-      ?.join("\n");
+    const content = aiResponse.message?.content;
 
-    if (!rawText) {
-      console.error("No text output:", aiResponse);
-      return res.status(500).json({ error: "No text returned from Cohere" });
+    if (!content || !Array.isArray(content)) {
+      return res.status(500).json({ error: "Invalid model response" });
     }
 
-    const jsonStart = rawText.indexOf("[");
-    const jsonEnd = rawText.lastIndexOf("]") + 1;
+    const rawText = content
+      .map(c => c.text)
+      .join("")
+      .trim();
 
-    if (jsonStart === -1 || jsonEnd === -1) {
-      console.error("Invalid JSON format:", rawText);
-      return res.status(500).json({ error: "Model did not return JSON" });
-    }
-
-    const questions = JSON.parse(rawText.slice(jsonStart, jsonEnd));
+    const questions = JSON.parse(rawText);
 
     return res.status(200).json(questions);
   } catch (err) {
